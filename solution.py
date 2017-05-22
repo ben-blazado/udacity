@@ -1,5 +1,17 @@
 assignments = []
 
+rows = 'ABCDEFGHI'
+cols = '123456789'
+
+boxes = cross(rows, cols)
+
+row_units = [cross(r, cols) for r in rows]
+column_units = [cross(rows, c) for c in cols]
+square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
+unitlist = row_units + column_units + square_units
+units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
+peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
+
 def assign_value(values, box, value):
     """
     Please use this function to update your values dictionary!
@@ -29,7 +41,7 @@ def naked_twins(values):
 
 def cross(A, B):
     "Cross product of elements in A and elements in B."
-    pass
+    return [a + b for a in A for b in b]
 
 def grid_values(grid):
     """
@@ -41,7 +53,10 @@ def grid_values(grid):
             Keys: The boxes, e.g., 'A1'
             Values: The value in each box, e.g., '8'. If the box has no value, then the value will be '123456789'.
     """
-    pass
+    labels = cross(rows, cols)
+    
+    return {k:v if not v == "." else '123456789' for (k, v) in zip(labels, grid)}
+
 
 def display(values):
     """
@@ -49,20 +64,95 @@ def display(values):
     Args:
         values(dict): The sudoku in dictionary form
     """
-    pass
+    #--- taken from the udacity quiz
+    width = 1+max(len(values[s]) for s in boxes)
+    line = '+'.join(['-'*(width*3)]*3)
+    for r in rows:
+        print(''.join(values[r+c].center(width)+('|' if c in '36' else '')
+                      for c in cols))
+        if r in 'CF': print(line)
+    return
 
 def eliminate(values):
-    pass
+    labels = list(values.keys())
+    
+    for box in values:
+        box_value = values[box]
+        if len(box_value) == 1:
+            #--- box is solved, find all peers and eliminate the box value from peers
+            for peer_box in peers[box]:
+                #--- remove box_value from peer by replacing with empty character
+                peer_value = values[peer_box]
+                peer_value = peer_value.replace(box_value, "")
+                #--- updated the board with the updated value of the peer
+                values[peer_box] = peer_value
+
+    return values
 
 def only_choice(values):
-    pass
+    for unit in unitlist:
+        for number in '123456789':
+            #--- find which boxes in the unit list have the number
+            boxes_having_number = [box for box in unit if number in values[box]]
+            
+            #--- if there is only one box with that number
+            #--- then that is the only only choice for that box
+            if len (boxes_having_number) == 1:
+                values[boxes_having_number[0]] = number
 
+    return values
+    
 def reduce_puzzle(values):
-    pass
+    stalled = False
+    while not stalled:
+        # Check how many boxes have a determined value
+        solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
+
+        # Your code here: Use the Eliminate Strategy
+        values = eliminate(values)
+
+        # Your code here: Use the Only Choice Strategy
+        values = only_choice(values)
+
+        # Check how many boxes have a determined value, to compare
+        solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+        # If no new values were added, stop the loop.
+        stalled = solved_values_before == solved_values_after
+        # Sanity check, return False if there is a box with zero available values:
+        if len([box for box in values.keys() if len(values[box]) == 0]):
+            return False
+    return values
 
 def search(values):
-    pass
+    # First, reduce the puzzle using the previous function
+    values = reduce_puzzle(values)
+    
+    if values is False:
+        return False
+        
+    if all (len(values[box]) == 1 for box in boxes):
+        #--- all values hav only 1 number solved
+        return values
+    
+    # Choose one of the unfilled squares with the fewest possibilities
+    lowest_len = 9
+    best_box = ''
+    for box in boxes:
+        box_len = len(values[box])
+        if box_len < lowest_len and box_len > 1:
+            best_box = box
+            l = box_len
+            
+    # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
+    for number in values[best_box]:
+        new_values = values.copy()
+        new_values[best_box] = number
+        search_result = search(new_values)
+        if search_result:
+            return search_result
+        #--- else try the next number from values[best_box]
 
+        
 def solve(grid):
     """
     Find the solution to a Sudoku grid.
@@ -72,6 +162,13 @@ def solve(grid):
     Returns:
         The dictionary representation of the final sudoku grid. False if no solution exists.
     """
+    sudoku = grid_values(grid)
+    search_result = search(sudoku)
+    if search_result:
+        return search_result
+    else:
+        return False
+    
 
 if __name__ == '__main__':
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
