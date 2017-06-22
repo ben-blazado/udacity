@@ -1,4 +1,10 @@
-assignments = []
+#--- Benjamin Blazado
+
+assignments=[]
+
+def cross(A, B):
+    "Cross product of elements in A and elements in B."
+    return [a + b for a in A for b in B]
 
 rows = 'ABCDEFGHI'
 cols = '123456789'
@@ -8,7 +14,9 @@ boxes = cross(rows, cols)
 row_units = [cross(r, cols) for r in rows]
 column_units = [cross(rows, c) for c in cols]
 square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','456','789')]
-unitlist = row_units + column_units + square_units
+diagonal_units = [[r + c for r, c in zip(rows, cols)], [r + c for r, c in zip(rows[::-1], cols)]]
+unitlist = row_units + column_units + square_units + diagonal_units
+
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
@@ -38,10 +46,31 @@ def naked_twins(values):
 
     # Find all instances of naked twins
     # Eliminate the naked twins as possibilities for their peers
+    
+    #--- create a list, doubles, of all boxes with double values
+    doubles = [box for box in values if len(values[box]) == 2]
+    
+    while len(doubles) > 1:
 
-def cross(A, B):
-    "Cross product of elements in A and elements in B."
-    return [a + b for a in A for b in b]
+        #--- get the box from the list and see if we can find a twin
+        box = doubles.pop()
+        
+        #--- find twin of box from the rest of the other doubles
+        for other_double in doubles:
+            #--- examine each unit for a twin, other_double, of box
+            for unit in unitlist:
+                #--- other_double is a twin if it is in the same unit and has the same value
+                if box in unit and other_double in unit and values[box] == values[other_double]:
+                    #--- other_double is twin of box!
+                    #--- remove the values of the box from the other boxes in the same unit
+                    for v in values[box]:
+                        #--- the other boxes are from the same unit and have at least 3 values
+                        other_boxes = [b for b in unit if b not in [box, other_double]] #--- and len(values[b]) > 2]
+                        #--- remove the value, v from each of the otherboxes
+                        for o in other_boxes:
+                            assign_value(values, o, values[o].replace(v, ''))
+
+    return values                        
 
 def grid_values(grid):
     """
@@ -57,14 +86,13 @@ def grid_values(grid):
     
     return {k:v if not v == "." else '123456789' for (k, v) in zip(labels, grid)}
 
-
 def display(values):
     """
     Display the values as a 2-D grid.
     Args:
         values(dict): The sudoku in dictionary form
     """
-    #--- taken from the udacity quiz
+    #--- taken straight from the udacity quiz
     width = 1+max(len(values[s]) for s in boxes)
     line = '+'.join(['-'*(width*3)]*3)
     for r in rows:
@@ -85,7 +113,7 @@ def eliminate(values):
                 peer_value = values[peer_box]
                 peer_value = peer_value.replace(box_value, "")
                 #--- updated the board with the updated value of the peer
-                values[peer_box] = peer_value
+                assign_value (values, peer_box, peer_value)
 
     return values
 
@@ -98,11 +126,13 @@ def only_choice(values):
             #--- if there is only one box with that number
             #--- then that is the only only choice for that box
             if len (boxes_having_number) == 1:
-                values[boxes_having_number[0]] = number
+                #--- values[boxes_having_number[0]] = number
+                assign_value (values, boxes_having_number[0], number)
 
     return values
     
 def reduce_puzzle(values):
+    #--- this function was taken from my answer to the quiz, but I added the naked_twins strategy    
     stalled = False
     while not stalled:
         # Check how many boxes have a determined value
@@ -113,44 +143,59 @@ def reduce_puzzle(values):
 
         # Your code here: Use the Only Choice Strategy
         values = only_choice(values)
+        
+        #--- this was pretty much taken from the quiz, but we added the naked_twins strategy
+        #--- use the naked_twins strategy
+        values = naked_twins(values)
 
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
+
         # If no new values were added, stop the loop.
         stalled = solved_values_before == solved_values_after
+
         # Sanity check, return False if there is a box with zero available values:
         if len([box for box in values.keys() if len(values[box]) == 0]):
             return False
     return values
 
 def search(values):
+    #--- this function was taken from my answer to the quiz
     # First, reduce the puzzle using the previous function
     values = reduce_puzzle(values)
     
     if values is False:
+        #--- something went wrong
         return False
         
     if all (len(values[box]) == 1 for box in boxes):
-        #--- all values hav only 1 number solved
+        #--- all values have only 1 number solved
         return values
     
-    # Choose one of the unfilled squares with the fewest possibilities
+    #--- no solution found, conduct a search
+    
+    # Choose one of the unfilled squares, best_box, with the fewest possibilities (lowest number of values)
     lowest_len = 9
     best_box = ''
     for box in boxes:
         box_len = len(values[box])
         if box_len < lowest_len and box_len > 1:
+            lowest_len = box_len
             best_box = box
-            l = box_len
             
     # Now use recursion to solve each one of the resulting sudokus, and if one returns a value (not False), return that answer!
     for number in values[best_box]:
+        #--- create a search branch for each number 
         new_values = values.copy()
-        new_values[best_box] = number
+        assign_value (new_values, best_box, number)
         search_result = search(new_values)
         if search_result:
             return search_result
         #--- else try the next number from values[best_box]
+        
+    #--- keep searching
+    #--- this part is reached when all values in the node have been searched, but no solution found
+    return False
 
         
 def solve(grid):
