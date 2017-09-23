@@ -1,0 +1,42 @@
+.DS_Store
+
+# Ignore downloaded datasets
+embeddings/data/
+embeddings/text8.zip
+face_generation/data/
+
+.ipynb_checkpoints/
+
+
+*.pyc
+*.p
+*.pkl 
+
+*/.floyd*
+
+#--- ignore exercises
+#--- TODO: what do we do with exercises? we have to put them in git eventually?
+autoencoder/
+batch-norm/
+embeddings/
+environments/
+intro-to-rnns/
+intro-to-tensorflow/
+intro-to-tflearn/
+reinforcement/
+sandbox/
+semi-supervised/
+sentiment-network/
+sentiment-rnn/
+seq2seq/
+tensorboard/
+transfer-learning/
+weight-initialization/
+
+#--- large files or subfolders
+**/checkpoints/
+**/data/
+*.zip
+**/.zip
+*.pkl
+**/.pkl
