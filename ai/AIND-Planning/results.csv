@@ -1,0 +1,10 @@
+﻿Problem,Search,Heuristic,Expansions,Goal Tests,New Nodes,Plan Length,Time Elapsed
+Air Cargo Problem 1,astar_search,h_1,55,57,224,6,0.083541118
+Air Cargo Problem 1,astar_search,h_ignore_preconditions,41,43,170,6,0.063229951
+Air Cargo Problem 1,astar_search,h_pg_levelsum,28,30,114,6,1.028191984
+Air Cargo Problem 2,astar_search,h_1,4853,4855,44041,9,22.55339888
+Air Cargo Problem 2,astar_search,h_ignore_preconditions,1450,1452,13303,9,6.889113799
+Air Cargo Problem 2,astar_search,h_pg_levelsum,659,661,5977,9,279.7875932
+Air Cargo Problem 3,astar_search,h_1,18235,18237,159716,12,90.42388176
+Air Cargo Problem 3,astar_search,h_ignore_preconditions,5040,5042,44944,12,25.56558528
+Air Cargo Problem 3,astar_search,h_pg_levelsum,1133,1135,10025,12,806.6243497
