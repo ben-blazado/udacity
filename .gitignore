@@ -7,12 +7,3 @@ __pycache__/
 *.so
 
 # Jupyter Notebook
-.ipynb_checkpoints/
-
-# dotenv
-.env
-
-# virtualenv
-.venv
-venv/
-ENV/
